@@ -1,5 +1,6 @@
-# Machine-Learning
+# Linear Regression
 
-linear regression code in linear-regression
-decision tree code in decision-tree 
-and so on
+Transform non-linear regression problems to linear problem by changin variables. Then apply linear regression techniques to analysis data. 
+
+# How to run:
+Just run it
