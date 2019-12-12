@@ -29,6 +29,88 @@
 import numpy as np
 import os
 import graphviz
+import random
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn import svm, datasets
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.utils.multiclass import unique_labels
+import time
+
+
+# Self - defined functions:
+
+def plot_confusion_matrix(y_true, y_pred, classes,
+                          normalize=False,
+                          title=None,
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix, without normalization'
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    # Only use the labels that appear in the data
+    classes = unique_labels(y_true, y_pred)
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    ax.figure.colorbar(im, ax=ax)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=classes, yticklabels=classes,
+           title=title,
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+    return ax
+
+def stat(vec):
+    """
+    This function group vector values by unique values it has, return a dictionary in a
+    form of (unique_value : counts). This function is in convince of calculating probabilities.
+
+    :param vec: any vector
+    :return: dictionary that statistic occurrence of each unique values.
+    """
+    unique = {}
+    for i in vec:
+        if i not in unique:
+            unique[i] = 1
+        else:
+            new_val = unique.get(i)
+            new_val = new_val + 1
+            unique[i] = new_val
+    return unique
 
 
 def partition(x):
@@ -42,9 +124,7 @@ def partition(x):
       vk: indices of x == vk }, where [v1, ... vk] are all the unique values in the vector z.
     """
 
-    # INSERT YOUR CODE HERE
-    raise Exception('Function not yet implemented!')
-
+    unique = {}
 
 def entropy(y):
     """
@@ -52,9 +132,14 @@ def entropy(y):
 
     Returns the entropy of z: H(z) = p(z=v1) log2(p(z=v1)) + ... + p(z=vk) log2(p(z=vk))
     """
-
-    # INSERT YOUR CODE HERE
-    raise Exception('Function not yet implemented!')
+    # unique: value - frequency
+    # hz: entropy of the vector
+    unique = stat(y)
+    hz = 0
+    for i in unique:
+        p = unique[i]/len(y)
+        hz = hz + (p * np.log2(p))
+    return -hz
 
 
 def mutual_information(x, y):
@@ -66,8 +151,29 @@ def mutual_information(x, y):
     Returns the mutual information: I(x, y) = H(y) - H(y | x)
     """
 
-    # INSERT YOUR CODE HERE
-    raise Exception('Function not yet implemented!')
+    px = stat(x)
+    py = stat(y)
+
+    # Joint probability:
+    joint_stat = {}
+    for X in x:
+        for Y in y:
+            key = (X, Y)
+            if key not in joint_stat:
+                joint_stat[key] = 1
+            else:
+                new_val = joint_stat[key] + 1
+                joint_stat[key] = new_val
+
+    I_XY = 0
+    size = len(x) * len(y)
+    for i in px:
+        for j in py:
+            p_x = px[i] / len(x)
+            p_y = py[j] / len(y)
+            p_xy = joint_stat[(i, j)] / size
+            I_XY = p_xy * np.log2(p_xy / p_x / p_y)
+    return I_XY
 
 
 def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
@@ -107,12 +213,115 @@ def id3(x, y, attribute_value_pairs=None, depth=0, max_depth=5):
              (1, 1, True): 0},
          (0, 1, True):
             {(1, 1, False): 0,
-             (1, 1, True): 1}},
+             (1, 1, True): 1}
+        },
      (4, 1, True): 1}
     """
 
-    # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
-    raise Exception('Function not yet implemented!')
+    #Terminate condition 3:
+    if y.sum == len(y):
+        return 1
+    if y.sum == 0:
+        return 0
+
+    # Terminate condition 1:
+    if depth == max_depth:
+        if y.sum() < (len(y)/2):
+            return 0
+        elif y.sum() == (len(y)/2):
+            # Randomly pick up a value:
+            return y[0]
+        else:
+            return 1
+
+
+    # Current node entropy:
+    cur_entropy = entropy(y)
+
+    # If no attribute_value_pairs, generate one:
+    pairs = []
+    if attribute_value_pairs is None:
+        # Candidate nodes:
+        rows = x.shape[0]
+        cols = x.shape[1]
+        for col in range(cols):
+            vals = set()
+            for i in x[:,col]:
+                vals.add(i)
+            for val in vals:
+                pairs.append((col, val))
+    else:
+        pairs = attribute_value_pairs
+
+    # Terminate condition 2:
+    if len(pairs) == 0:
+        if y.sum() < (len(y) / 2):
+            return 0
+        elif y.sum() == (len(y) / 2):
+            # Randomly pick up a value:
+            return y[0]
+        else:
+            return 1
+
+    # If a attribute_value_pairs is here, select from it the best attribute:
+    info_gains = {}
+    max_info_gain = 0
+    for attribute_pair in pairs:
+        attribute = attribute_pair[0]
+
+        # Calculate population of separation of the attribute:
+        positive = 0
+        negative = 0
+        pos = 0
+        y_1 = np.array([])
+        y_2 = np.array([])
+        for a in x[:, attribute]:
+            if a == attribute_pair[1]:
+                positive = positive + 1
+                y_1 = np.append(y_1, y[pos])
+                pos = pos + 1
+            else:
+                negative = negative + 1
+                y_2 = np.append(y_2, y[pos])
+                pos = pos + 1
+        weight_1 = positive/len(y)
+        weight_2 = negative/len(y)
+        entropy_1 = entropy(y_1)
+        entropy_2 = entropy(y_2)
+
+        info_gain = cur_entropy - (weight_1 * entropy_1 + weight_2 * entropy_2)
+        info_gains[info_gain] = attribute_pair
+        if max_info_gain < info_gain:
+            max_info_gain = info_gain
+
+    attribute_chozen = info_gains[max_info_gain]
+    pairs.remove(attribute_chozen)
+
+    # Parameter for the next recursive call: x, y, attribute_value_pairs=None, depth=0, max_depth=5
+    attribute = attribute_chozen[0]
+    sub_y_true = np.array([])
+    sub_x_true = np.empty([0,x.shape[1]])
+    sub_y_false = np.array([])
+    sub_x_false = np.empty([0,x.shape[1]])
+    for i in range(len(y)):
+        if x[i, attribute] == attribute_chozen[1]:
+            sub_x_true = np.row_stack((sub_x_true, x[i,:]))
+            sub_y_true = np.append(sub_y_true, y[i])
+        else:
+            sub_x_false = np.row_stack((sub_x_false, x[i,:]))
+            sub_y_false = np.append(sub_y_false, y[i])
+
+    tuple1 = (attribute_chozen[0], attribute_chozen[1], True)
+    tuple2 = (attribute_chozen[0], attribute_chozen[1], False)
+
+    depth = depth + 1
+
+    if len(sub_y_true) == 0:
+        return {tuple1: random.randint(0,1), tuple2: id3(sub_x_false, sub_y_false, pairs, depth, max_depth)}
+    elif len(sub_x_false) == 0:
+        return {tuple1: id3(sub_x_true, sub_y_true, pairs, depth, max_depth), tuple2: random.randint(0,1)}
+    else:
+        return {tuple1: id3(sub_x_true, sub_y_true, pairs, depth, max_depth), tuple2: id3(sub_x_false, sub_y_false, pairs, depth, max_depth)}
 
 
 def predict_example(x, tree):
@@ -123,8 +332,22 @@ def predict_example(x, tree):
     Returns the predicted label of x according to tree
     """
 
-    # INSERT YOUR CODE HERE. NOTE: THIS IS A RECURSIVE FUNCTION.
-    raise Exception('Function not yet implemented!')
+    # Take out the node:
+    node = {}
+    for i in tree:
+        node = i
+        break
+
+    if x[node[0]] == node[1]:
+        sub_key = (node[0], node[1], True)
+    else:
+        sub_key = (node[0], node[1], False)
+
+    sub_tree = tree[sub_key]
+    if isinstance(sub_tree, int) or isinstance(sub_tree, float):
+        return sub_tree
+    else:
+        return predict_example(x, sub_tree)
 
 
 def compute_error(y_true, y_pred):
@@ -134,8 +357,12 @@ def compute_error(y_true, y_pred):
     Returns the error = (1/n) * sum(y_true != y_pred)
     """
 
-    # INSERT YOUR CODE HERE
-    raise Exception('Function not yet implemented!')
+    size = len(y_true)
+    error_sum = 0
+    for i in range(size):
+        if y_true[i] != y_pred[i]:
+            error_sum = error_sum + 1
+    return error_sum/size
 
 
 def pretty_print(tree, depth=0):
@@ -226,28 +453,62 @@ def to_graphviz(tree, dot_string='', uid=-1, depth=0):
 
 
 if __name__ == '__main__':
-    # Load the training data
-    M = np.genfromtxt('./monks-1.train', missing_values=0, skip_header=0, delimiter=',', dtype=int)
-    ytrn = M[:, 0]
-    Xtrn = M[:, 1:]
 
-    # Load the test data
-    M = np.genfromtxt('./monks-1.test', missing_values=0, skip_header=0, delimiter=',', dtype=int)
-    ytst = M[:, 0]
-    Xtst = M[:, 1:]
+    problems = ['monks_data/monks-1.train', 'monks_data/monks-2.train', 'monks_data/monks-3.train']
+    tests = ['monks_data/monks-1.test', 'monks_data/monks-2.test', 'monks_data/monks-3.test']
 
-    # Learn a decision tree of depth 3
-    decision_tree = id3(Xtrn, ytrn, max_depth=3)
+    # For each problem:
+    size = len(problems)
+    for i in range(size):
+        # Load the training data
+        M = np.genfromtxt(problems[i], missing_values=0, skip_header=0, delimiter=',', dtype=int)
+        ytrn = M[:, 0]
+        Xtrn = M[:, 1:]
 
-    # Pretty print it to console
-    pretty_print(decision_tree)
+        # Load the test data
+        M = np.genfromtxt(tests[i], missing_values=0, skip_header=0, delimiter=',', dtype=int)
+        ytst = M[:, 0]
+        Xtst = M[:, 1:]
 
-    # Visualize the tree and save it as a PNG image
-    dot_str = to_graphviz(decision_tree)
-    render_dot_file(dot_str, './my_learned_tree')
+        # In each problem, for every depth:
+        depth = np.array([])
+        tst_error = np.array([])
+        for j in range(1,11):
+            # Learn a decision tree of depth 1 - 10
+            decision_tree = id3(Xtrn, ytrn, max_depth=j)
 
-    # Compute the test error
-    y_pred = [predict_example(x, decision_tree) for x in Xtst]
-    tst_err = compute_error(ytst, y_pred)
+            # Pretty print it to console
+            pretty_print(decision_tree)
 
-    print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
+            if i == 1:
+                # Visualize the tree and save it as a PNG image
+                dot_str = to_graphviz(decision_tree)
+                render_dot_file(dot_str, './my_learned_tree_depth_' + str(j))
+
+            # Compute the test error
+            y_pred = [predict_example(x, decision_tree) for x in Xtst]
+            tst_err = compute_error(ytst, y_pred)
+
+            # Confusion matrix:
+            if i == 1:
+                class_names = [0,1]
+                np.set_printoptions(precision=2)
+                y_pred = np.array(y_pred)
+                plot_confusion_matrix(ytst, y_pred, classes=class_names,
+                                      title='Confusion matrix, without normalization')
+                plot_confusion_matrix(ytst, y_pred, classes=class_names,
+                                      title='Normalized confusion matrix')
+
+            print('Test Error = {0:4.2f}%.'.format(tst_err * 100))
+            depth = np.append(depth, j)
+            tst_error = np.append(tst_error, tst_err)
+
+        # Plot depth - test error curve:
+        plt.figure()
+        plt.ylim(ymin=0)
+        plt.ylim(ymax=1)
+        plt.plot(depth, tst_error, 12, marker='o', color='orange')
+        plt.title('Monk_' + str(i+1), fontsize=18)
+        plt.xlabel('Depth', fontsize=16)
+        plt.ylabel('Test Error', fontsize=16)
+        plt.show()
