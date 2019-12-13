@@ -9,7 +9,7 @@ We trying to find best parameters for the classifier.
 
 # How to run it:
 <b>svm_changing_regularization_params.py</b> and <b>svm_changing_kernel_params.py</b>: just run them. <br />
-<b>svm_breast_cancer</b>: save this file in the same directory as wdbc_trn.csv, wdbc_val.csv and wdbc_tst.csv, which are the data files. Then run it.
+<b>svm_breast_cancer</b>: save this file in the same directory as <b>wdbc_trn.csv</b>, <b>wdbc_val.csv</b> and <b>wdbc_tst.csv</b>, which are the data files. Then run it.
 
 # Results:
 Pictures show up when running and accuracy on console when finished.
