@@ -2,7 +2,7 @@
 Using naive bayes algorithm to distinguish spam emails from ham.
 
 # Files:
-Naive_Bayes.py  -->  classifier trained on plain text
+Naive_Bayes.py  -->  classifier trained on plain text <br />
 Naive_Bayes_with_stop_words.py  -->  classifier trained with some words being exclulded.
 
 # How to run it:
