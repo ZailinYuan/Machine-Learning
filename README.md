@@ -8,8 +8,8 @@ We trying to find best parameters for the classifier.
 * svm_breast_cancer  -->  change both parameters to find the best combination of the two that generating the best accuracy.
 
 # How to run it:
-svm_changing_regularization_params.py  and   svm_changing_kernel_params.py: just run them. <br />
-svm_breast_cancer: save this file in the same directory as wdbc_trn.csv, wdbc_val.csv and wdbc_tst.csv, which are the data files. Then run it.
+<b>svm_changing_regularization_params.py</b> and <b>svm_changing_kernel_params.py</b>: just run them. <br />
+<b>svm_breast_cancer</b>: save this file in the same directory as wdbc_trn.csv, wdbc_val.csv and wdbc_tst.csv, which are the data files. Then run it.
 
 # Results:
 Pictures show up when running and accuracy on console when finished.
