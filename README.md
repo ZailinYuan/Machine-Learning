@@ -5,7 +5,7 @@ We trying to find best parameters for the classifier.
 # Files:
 * svm_changing_regularization_params.py  -->  change regularization parameters and find out how the testing error rate changes. <br />
 * svm_changing_kernel_params.py  -->  change kernel parameters and find out how the testing error rate changes. <br />
-*The two files above need no input data file. However, the following one have external input data files.
+<b>The two files above need no input data file. However, the following one have external input data files.</b>
 * svm_breast_cancer  -->  change both parameters to find the best combination of the two that generating the best accuracy.
 
 # Results:
