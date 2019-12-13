@@ -26,11 +26,11 @@ def get_err(p, y):
 
 # Import data:
 trn_data = np.loadtxt(
-    'C:/Users/User/Desktop/Computer Science/6375 machine learning/Assignments/Assignment_4/wdbc_trn.csv', delimiter=',')
+    'wdbc_trn.csv', delimiter=',')
 val_data = np.loadtxt(
-    'C:/Users/User/Desktop/Computer Science/6375 machine learning/Assignments/Assignment_4/wdbc_val.csv', delimiter=',')
+    'wdbc_val.csv', delimiter=',')
 tst_data = np.loadtxt(
-    'C:/Users/User/Desktop/Computer Science/6375 machine learning/Assignments/Assignment_4/wdbc_tst.csv', delimiter=',')
+    'wdbc_tst.csv', delimiter=',')
 
 # Prepare data;
 y_trn = trn_data[:, 0]
