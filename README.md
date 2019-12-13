@@ -1,4 +1,4 @@
-# Machine-Learning
+# Logistic Regression L2
 
 L2 logistic regression for diagnose spam emails.
 
